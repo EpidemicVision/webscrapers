@@ -5,8 +5,8 @@ from calendar import monthrange
 
 import pandas as pd
 
-from pytrends.exceptions import ResponseError
-from pytrends.request import TrendReq
+from libs.pytrends.exceptions import ResponseError
+from libs.pytrends.request import TrendReq
 
 
 def get_last_date_of_month(year: int, month: int) -> date:
