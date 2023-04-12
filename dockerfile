@@ -1,7 +1,12 @@
-# This docker file is just for the db setup. This IS NOT TO RUN THIS APP.
+FROM python:3.10-slim-buster
 
-FROM postgres
-ENV POSTGRES_USER docker
-ENV POSTGRES_PASSWORD docker
-ENV POSTGRES_DB evision
-EXPOSE 5432
+WORKDIR /usr/src/
+
+RUN apt-get update && apt-get -y install nano
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+ENV PYTHONPATH "/usr/src:${PYTHONPATH}"
+
+COPY . .
+
+CMD ["tail", "-f", "/dev/null"]

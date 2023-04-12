@@ -8,6 +8,7 @@ from app.influenza.constants import (
     STATE_CODE_MAPPER,
 )
 from app.libs.pytrends.request import TrendReq
+from app.libs.pytrends.exceptions import TooManyRequestsError
 import pandas as pd
 import os
 import time
@@ -25,7 +26,7 @@ year_2022_id = (
 end_id = current_year - 2022 + year_2022_id
 start_id = end_id - 7
 
-engine = create_engine(f'postgresql://{config("DB_USER")}:{config("DB_USER")}@{config("DB_LINK")}/{config("DB_NAME")}', echo=False)
+engine = create_engine(config("DB_URL", default=os.environ.get("DB_URL")), echo=False)
 connect = engine.connect()
 meta = MetaData()
 meta.reflect(bind=engine)
@@ -278,15 +279,18 @@ def trends_scraper(download_dir: str = INFLUENZA_DATA_DIR) -> None:
         # first making a df of all the terms of one state
         state_df = None
         for term in terms:
-            pytrends.build_payload(kw_list=[term], timeframe=timeframe, geo=state_code)
-            column_df = pytrends.interest_over_time()
-            column_df = column_df.reset_index().drop(columns="isPartial")
-            if state_df is None:
-                state_df = column_df.copy(deep=True)
-            else:
-                state_df = state_df.merge(column_df, on="date")
-            time.sleep(randint(2, 5))
-
+            try:
+                pytrends.build_payload(kw_list=[term], timeframe=timeframe, geo=state_code)
+                column_df = pytrends.interest_over_time()
+                column_df = column_df.reset_index().drop(columns="isPartial")
+                if state_df is None:
+                    state_df = column_df.copy(deep=True)
+                else:
+                    state_df = state_df.merge(column_df, on="date")
+                time.sleep(randint(2, 5))
+            except TooManyRequestsError as ex:
+                print(ex)
+                # time.sleep()
         state_df["state"] = state_name
         state_df["state_code"] = state_code
         state_df["week_number"] = state_df["date"].dt.strftime("%U").astype(int)
@@ -320,7 +324,7 @@ def scrape_cdc_trends_data(data_dir: str = INFLUENZA_DATA_DIR) -> None:
         os.mkdir(INFLUENZA_DATA_DIR)
 
     cdc_ilinet_downloader()
-    trends_scraper()
+    # trends_scraper()
 
 
 if __name__ == "__main__":

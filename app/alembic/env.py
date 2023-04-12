@@ -6,6 +6,7 @@ from sqlalchemy import pool
 from alembic import context
 
 import decouple
+import os
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -17,10 +18,10 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_USER", decouple.config("DB_USER"))
-config.set_section_option(section, "DB_PASS", decouple.config("DB_PASS"))
-config.set_section_option(section, "DB_NAME", decouple.config("DB_NAME"))
-config.set_section_option(section, "DB_LINK", decouple.config("DB_LINK"))
+config.set_section_option(section, "DB_USER", decouple.config("DB_USER", default=os.environ.get("DB_USER")))
+config.set_section_option(section, "DB_PASS", decouple.config("DB_PASS", default=os.environ.get("DB_PASS")))
+config.set_section_option(section, "DB_NAME", decouple.config("DB_NAME", default=os.environ.get("DB_NAME")))
+config.set_section_option(section, "DB_LINK", decouple.config("DB_LINK", default=os.environ.get("DB_LINK")))
 
 # add your model's MetaData object here
 # for 'autogenerate' support
